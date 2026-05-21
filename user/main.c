@@ -8,6 +8,26 @@
 // 驱动: 野火直流无刷电机驱动板 (三电阻采样, 信号隔离, 12~48V)
 // 主控: TMS320F2800157 @ 120 MHz
 //###########################################################################
+
+
+/*控制模式下的 Iq_ref 生成逻辑：
+速度模式:
+Iq_ref = speed_PI + friction_ff + cogging_ff
+
+位置模式:
+Iq_ref = position_speed_PI + friction_ff + cogging_ff
+
+转矩模式:
+Iq_ref = Iq_ref_A + cogging_ff
+不额外加摩擦补偿
+
+辨识模式:
+Iq_ref = Ident_speedLoop_run()
+不额外加 cogging_ff
+不额外加 getFrictionCompCurrent()
+*/
+
+
 #include "hal.h"
 #include "foc.h"
 #include "vofa.h"
@@ -89,6 +109,11 @@ volatile float ic_sensed;
 
 volatile float thetaOpen_rad  = 0.0f;
 extern  float ident_iq_pred;
+
+//----------iq摩擦补偿---------------
+volatile float fric_iqComp_A = 0.0f;
+#define FRICTION_COMP_MIN_SPEED_RADPS   0.05f
+static float getFrictionCompCurrent(float speed_ref_rads);
 
 
 //===========================================================================
@@ -358,6 +383,10 @@ __interrupt void motorControlISR(void)
              // 根据控制模式设定 Iq 参考
              ctrlMode = (CtrlMode_e)cmdCtrlMode;
 
+            //iq摩擦补偿
+            float frictionSpeedRef_rads = 0.0f;
+            uint16_t frictionCompAllowed = 0U;
+
 
              switch(ctrlMode)
              {
@@ -366,10 +395,14 @@ __interrupt void motorControlISR(void)
                  break;
 
              case CTRL_MODE_SPEED:
-                 foc.iqRef_A = PI_run((PI_t *)&foc.piSpd,
+
+                foc.iqRef_A = PI_run((PI_t *)&foc.piSpd,
                                       speed_ref_rpm * MATH_TWO_PI / 60.0f,
                                       foc.enc.speedMech_rads);
-                 break;
+
+                frictionSpeedRef_rads = speed_ref_rpm * MATH_TWO_PI / 60.0f;
+                frictionCompAllowed = 1U;//速度模式允许摩擦补偿
+                break;
 
              case CTRL_MODE_POSITION:
                  // 设定一个允许的误差范围，比如 0.05 rad (约 3度)
@@ -382,10 +415,15 @@ __interrupt void motorControlISR(void)
                 foc.spdRef_rads = PosLoop_run(foc.posRef_rad,
                                                foc.enc.posMech_rad,
                                                POS_LOOP_SPD_LIMIT);
-                 foc.iqRef_A = PI_run((PI_t *)&foc.piSpd,
+                foc.iqRef_A = PI_run((PI_t *)&foc.piSpd,
                                       foc.spdRef_rads,
                                       foc.enc.speedMech_rads);
+
+                frictionSpeedRef_rads = foc.spdRef_rads;
+                frictionCompAllowed = 1U; //位置模式允许摩擦补偿
+
                  break;
+
 
              case CTRL_MODE_IDENT:
                 if(ctrlMode == CTRL_MODE_IDENT && prevCtrlMode != CTRL_MODE_IDENT)
@@ -402,25 +440,40 @@ __interrupt void motorControlISR(void)
                  break;
              }
 
-             if(ctrlMode != CTRL_MODE_IDENT)
-             {
-                 foc.iqRef_A += Cogging_getCompCurrent(foc.enc.rawAngle);
+            //-------------------------------------------------------------------------
+            // 摩擦补偿和齿槽补偿只在非辨识模式下启用，因为它们会干扰辨识过程。
+            if(ctrlMode != CTRL_MODE_IDENT)
+            {
+                if(frictionCompAllowed != 0U)
+                {
+                    foc.iqRef_A += getFrictionCompCurrent(frictionSpeedRef_rads);
+                }
+                else
+                {
+                    fric_iqComp_A = 0.0f;
+                }
 
-                 if(foc.iqRef_A > MOTOR_MAX_CURRENT_A)
-                 {
-                     foc.iqRef_A = MOTOR_MAX_CURRENT_A;
-                 }
-                 else if(foc.iqRef_A < -MOTOR_MAX_CURRENT_A)
-                 {
-                     foc.iqRef_A = -MOTOR_MAX_CURRENT_A;
-                 }
-             }
-             else
-             {
-                 Cogging_clearRuntimeOutput();
-             }
+                foc.iqRef_A += Cogging_getCompCurrent(foc.enc.rawAngle);
 
-             prevCtrlMode = ctrlMode;//有什么用？
+                //限幅
+                if(foc.iqRef_A > MOTOR_MAX_CURRENT_A)
+                {
+                    foc.iqRef_A = MOTOR_MAX_CURRENT_A;
+                }
+                else if(foc.iqRef_A < -MOTOR_MAX_CURRENT_A)
+                {
+                    foc.iqRef_A = -MOTOR_MAX_CURRENT_A;
+                }
+            }
+            else
+            {
+                fric_iqComp_A = 0.0f;
+                Cogging_clearRuntimeOutput();
+            }
+
+
+
+             prevCtrlMode = ctrlMode;//给ident模式使用，判断是否刚切换到辨识模式，以便重置辨识状态机
          }
 
 
@@ -475,6 +528,53 @@ __interrupt void motorControlISR(void)
     // 中断应答
     HAL_ackADCInt();
 }
+
+//===========================================================================
+//iq摩擦补偿函数
+//===========================================================================
+static float getFrictionCompCurrent(float speed_ref_rads)
+{
+    float sign_w;
+    float iq_ff;
+
+    if((ident_res.Is_Finished == 0U) || (ident_res.Enable_FF == 0U))
+    {
+        fric_iqComp_A = 0.0f;
+        return 0.0f;
+    }
+
+    if(speed_ref_rads > FRICTION_COMP_MIN_SPEED_RADPS)
+    {
+        sign_w = 1.0f;
+    }
+    else if(speed_ref_rads < -FRICTION_COMP_MIN_SPEED_RADPS)
+    {
+        sign_w = -1.0f;
+    }
+    else
+    {
+        sign_w = 0.0f;
+    }
+
+    iq_ff = (ident_res.Bm_Active * speed_ref_rads +
+             ident_res.Cm_Active * sign_w) / MOTOR_KT_NM_PER_A;
+
+    if(iq_ff > MOTOR_MAX_CURRENT_A)
+    {
+        iq_ff = MOTOR_MAX_CURRENT_A;
+    }
+    else if(iq_ff < -MOTOR_MAX_CURRENT_A)
+    {
+        iq_ff = -MOTOR_MAX_CURRENT_A;
+    }
+
+    fric_iqComp_A = iq_ff;
+    return iq_ff;
+}
+
+
+
+
 
 //===========================================================================
 // 故障检测 (在 ISR 中调用)

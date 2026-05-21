@@ -48,7 +48,7 @@ static uint16_t cog_cnt_neg[COG_LUT_SIZE];    // 反转每个位置采了多少�
 #pragma DATA_SECTION(cog_lut, "cog_data");
 static float    cog_lut[COG_LUT_SIZE];     // 最终补偿表 (单位 A)，在 ISR 中使用
 #pragma DATA_SECTION(cog_tmp, "cog_data");
-static float    cog_tmp[COG_LUT_SIZE] // 生成 LUT 时的平滑临时表
+static float    cog_tmp[COG_LUT_SIZE]; // 生成 LUT 时的平滑临时表
 
 // 简单限幅，防止记录值或补偿值过大。
 static float Cogging_limit(float x, float minVal, float maxVal)
