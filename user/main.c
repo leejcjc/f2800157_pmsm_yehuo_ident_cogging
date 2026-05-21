@@ -12,6 +12,7 @@
 #include "foc.h"
 #include "vofa.h"
 #include "ident.h"
+#include "cogging.h"
 #include <math.h>
 
 //===========================================================================
@@ -267,10 +268,17 @@ __interrupt void motorControlISR(void)
         // 检测 Z 上升沿事件 (硬件已自动锁存 QPOSILAT)
         if(HAL_EQEP_indexEventOccurred())
         {
-            int32_t zCnt = (int32_t)HAL_EQEP_getIndexLatch();//读取此时的z相位置
+            int32_t zCntRaw = (int32_t)HAL_EQEP_getIndexLatch();//读取此时的z相位置
+            int32_t zCogCnt = zCntRaw;
+            int32_t zCnt = zCntRaw;
+
+            zCogCnt %= (int32_t)ENC_COUNTS_PER_REV;
+            if(zCogCnt < 0) zCogCnt += (int32_t)ENC_COUNTS_PER_REV;
+            Cogging_setZeroCount((uint16_t)zCogCnt);
  
             // 归一化到一个电周期 [0, 2000)
             zCnt %= (int32_t)ENC_COUNTS_PER_ELEC_REV;
+
             if(zCnt < 0) zCnt += (int32_t)ENC_COUNTS_PER_ELEC_REV;
  
             g_zCntOffset = zCnt;//？为什么偏置值不是当前的读数zCnt减去刚开始的位置读数？
@@ -334,10 +342,18 @@ __interrupt void motorControlISR(void)
             //一阶低通滤波（有什么影响？）
             foc.enc.speedMech_rads = 0.295f * rawSpeed + 0.705f * foc.enc.speedMech_rads;
            
+
             Encoder_calcSpeed((Encoder_t *)&foc.enc);//单位转换
+
+            Cogging_recordSample(foc.enc.rawAngle,
+                                 foc.enc.speedMech_rads,
+                                 foc.iDQ.q,
+                                 ident_res.Bm_Active,
+                                 ident_res.Cm_Active);
 
              // 根据控制模式设定 Iq 参考
              ctrlMode = (CtrlMode_e)cmdCtrlMode;
+
 
              switch(ctrlMode)
              {
@@ -375,13 +391,35 @@ __interrupt void motorControlISR(void)
                  foc.iqRef_A = Ident_speedLoop_run(foc.enc.speedMech_rads);
                  break;
 
+
+
              default:
                  foc.iqRef_A = 0.0f;
                  break;
              }
 
-             prevCtrlMode = ctrlMode;
+             if(ctrlMode != CTRL_MODE_IDENT)
+             {
+                 foc.iqRef_A += Cogging_getCompCurrent(foc.enc.rawAngle);
+
+                 if(foc.iqRef_A > MOTOR_MAX_CURRENT_A)
+                 {
+                     foc.iqRef_A = MOTOR_MAX_CURRENT_A;
+                 }
+                 else if(foc.iqRef_A < -MOTOR_MAX_CURRENT_A)
+                 {
+                     foc.iqRef_A = -MOTOR_MAX_CURRENT_A;
+                 }
+             }
+             else
+             {
+                 Cogging_clearRuntimeOutput();
+             }
+
+             prevCtrlMode = ctrlMode;//有什么用？
          }
+
+
 
          // ---- 电流环 (每次 ISR) ----
          // Id 参考 = 0 (表贴/混合步进, 无弱磁)
@@ -555,6 +593,8 @@ void main(void)
     // 4. FOC 初始化
     FOC_init((FOC_t *)&foc);
 
+    Cogging_init();
+
     // 4.5 发送 VOFA 同步帧 (阻塞, 帮助 VOFA+ 锁定 4 通道)
     VOFA_sendSyncFrames();
 
@@ -567,6 +607,7 @@ void main(void)
     {
         // VOFA 非阻塞发送 (每次循环尝试填充 SCI FIFO)
         VOFA_sendBackground();
+        Cogging_serviceRequests();
 
         if(HAL_getCPUTimerFlag())
         {

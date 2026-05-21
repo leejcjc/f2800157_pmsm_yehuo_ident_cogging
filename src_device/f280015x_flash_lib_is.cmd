@@ -158,6 +158,7 @@ SECTIONS
                               LOAD_START(loadStart_dmaBuf_data),
                               LOAD_END(loadEnd_dmaBuf_data),
                               LOAD_SIZE(loadSize_dmaBuf_data)
+    cog_data             : >  RAMLS0D
     /* SFRA/datalog/debug sections removed - not used */
 }
 
