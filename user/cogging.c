@@ -30,7 +30,7 @@ volatile uint16_t cog_missing_bins = COG_LUT_SIZE;
 volatile uint32_t cog_pos_samples  = 0UL;
 volatile uint32_t cog_neg_samples  = 0UL;
 
-volatile float cog_gain       = 0.0f;
+volatile float cog_gain       = 0.2f;
 volatile float cog_iqComp_A   = 0.0f;
 volatile float cog_iqRaw_A    = 0.0f;
 volatile float cog_iqRecord_A = 0.0f;
@@ -38,17 +38,17 @@ volatile float cog_iqRecord_A = 0.0f;
 // 齿槽补偿需要较大的数组，不能放默认 .bss 小 RAM 区。
 // 这里把数组放到 linker 文件里的 cog_data 段，再由 cmd 文件映射到 RAMLS0D。
 #pragma DATA_SECTION(cog_sum_pos, "cog_data");
-static float    cog_sum_pos[COG_LUT_SIZE];
+static float    cog_sum_pos[COG_LUT_SIZE];     // 正转累计
 #pragma DATA_SECTION(cog_sum_neg, "cog_data");
-static float    cog_sum_neg[COG_LUT_SIZE];
+static float    cog_sum_neg[COG_LUT_SIZE];     // 反转累计
 #pragma DATA_SECTION(cog_cnt_pos, "cog_data");
-static uint16_t cog_cnt_pos[COG_LUT_SIZE];
+static uint16_t cog_cnt_pos[COG_LUT_SIZE];    // 正转每个位置采了多少次
 #pragma DATA_SECTION(cog_cnt_neg, "cog_data");
-static uint16_t cog_cnt_neg[COG_LUT_SIZE];
+static uint16_t cog_cnt_neg[COG_LUT_SIZE];    // 反转每个位置采了多少次
 #pragma DATA_SECTION(cog_lut, "cog_data");
-static float    cog_lut[COG_LUT_SIZE];
+static float    cog_lut[COG_LUT_SIZE];     // 最终补偿表 (单位 A)，在 ISR 中使用
 #pragma DATA_SECTION(cog_tmp, "cog_data");
-static float    cog_tmp[COG_LUT_SIZE];
+static float    cog_tmp[COG_LUT_SIZE] // 生成 LUT 时的平滑临时表
 
 // 简单限幅，防止记录值或补偿值过大。
 static float Cogging_limit(float x, float minVal, float maxVal)

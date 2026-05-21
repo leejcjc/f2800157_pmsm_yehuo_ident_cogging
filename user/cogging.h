@@ -23,9 +23,9 @@ extern "C" {
 #define COG_SMOOTH_RADIUS            2U
 
 typedef enum {
-    COG_RECORD_STOP     = 0U,
-    COG_RECORD_POSITIVE = 1U,
-    COG_RECORD_NEGATIVE = 2U
+    COG_RECORD_STOP     = 0U,  //停止记录
+    COG_RECORD_POSITIVE = 1U,  //正转记录
+    COG_RECORD_NEGATIVE = 2U   //反转记录 
 } CoggingRecordMode_e;
 
 extern volatile uint16_t cog_enable;

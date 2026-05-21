@@ -272,13 +272,17 @@ __interrupt void motorControlISR(void)
             int32_t zCogCnt = zCntRaw;
             int32_t zCnt = zCntRaw;
 
+            // 归一化到一个电周期 [0, 10000)
             zCogCnt %= (int32_t)ENC_COUNTS_PER_REV;
             if(zCogCnt < 0) zCogCnt += (int32_t)ENC_COUNTS_PER_REV;
+            
+            //让齿槽 LUT 的第 0 点和机械绝对位置绑定起来。
+            //否则每次上电编码器从不同位置开始，补偿表就会错位。
             Cogging_setZeroCount((uint16_t)zCogCnt);
+
  
             // 归一化到一个电周期 [0, 2000)
             zCnt %= (int32_t)ENC_COUNTS_PER_ELEC_REV;
-
             if(zCnt < 0) zCnt += (int32_t)ENC_COUNTS_PER_ELEC_REV;
  
             g_zCntOffset = zCnt;//？为什么偏置值不是当前的读数zCnt减去刚开始的位置读数？
