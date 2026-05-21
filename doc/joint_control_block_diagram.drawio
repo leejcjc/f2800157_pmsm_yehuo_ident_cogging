@@ -1,0 +1,332 @@
+<mxfile host="65bd71144e">
+    <diagram id="joint-control" name="关节控制算法框图">
+        <mxGraphModel dx="872" dy="901" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="title" value="&lt;b&gt;关节电机阻抗控制算法框图&lt;/b&gt;&lt;br&gt;硬件: F2800157 + 野火驱动板 + 42JSF630AS-1000 (50极对, 1000线编码器)" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=16;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="20" width="800" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="layer1_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;opacity=30;arcSize=5;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="80" width="1520" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="layer1_label" value="&lt;b&gt;阻抗控制层 (1.5 kHz)&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=top;fillColor=#FFFFFF;strokeColor=none;fontSize=13;fontColor=#2D7600;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="85" width="150" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="cmd_theta" value="&lt;b&gt;θ_d&lt;/b&gt;&lt;br&gt;目标位置&lt;br&gt;(rad)" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="120" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="cmd_kp" value="&lt;b&gt;Kp&lt;/b&gt;&lt;br&gt;刚度&lt;br&gt;(Nm/rad)" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="200" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="cmd_kd" value="&lt;b&gt;Kd&lt;/b&gt;&lt;br&gt;阻尼&lt;br&gt;(Nm·s/rad)" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="150" y="200" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="sum_pos" value="&lt;b&gt;&lt;font color=&quot;#000000&quot;&gt;⊕&lt;/font&gt;&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#f5f5f5;strokeColor=#666666;fontSize=16;" parent="1" vertex="1">
+                    <mxGeometry x="260" y="130" width="40" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_cmd_theta_to_sum" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="cmd_theta" target="sum_pos" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="gain_kp" value="&lt;b&gt;× Kp&lt;/b&gt;&lt;br&gt;弹簧力" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="340" y="125" width="90" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_sum_to_kp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="sum_pos" target="gain_kp" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="sum_vel" value="&lt;b&gt;&lt;font color=&quot;#000000&quot;&gt;⊕&lt;/font&gt;&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#f5f5f5;strokeColor=#666666;fontSize=16;" parent="1" vertex="1">
+                    <mxGeometry x="575" y="210" width="40" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="gain_kd" value="&lt;b&gt;× Kd&lt;/b&gt;&lt;br&gt;阻尼力" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="690" y="205" width="90" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_sumvel_to_kd" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="sum_vel" target="gain_kd" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="sum_tau" value="&lt;b&gt;&lt;font color=&quot;#000000&quot;&gt;Σ&lt;/font&gt;&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#f5f5f5;strokeColor=#666666;fontSize=16;" parent="1" vertex="1">
+                    <mxGeometry x="800" y="130" width="40" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_kp_to_sum" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="gain_kp" target="sum_tau" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_kd_to_sum" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="gain_kd" target="sum_tau" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="tau_out" value="&lt;b&gt;τ_desired&lt;/b&gt;&lt;br&gt;(Nm)" style="text;html=1;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=none;fontSize=12;fontColor=#2D7600;" parent="1" vertex="1">
+                    <mxGeometry x="940" y="140" width="90" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_sum_to_tau" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="sum_tau" target="tau_out" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="formula1" value="&lt;i&gt;τ = Kp·(θ_d − θm) + Kd·(ω_d − ω)&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontSize=11;fontColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="220" y="90" width="300" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="layer2_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;opacity=30;arcSize=5;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="300" width="1520" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="layer2_label" value="&lt;b&gt;力矩→电流换算 + 前馈补偿层 (1.5 kHz)&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=top;fillColor=#FFFFFF;strokeColor=none;fontSize=13;fontColor=#0050EF;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="305" width="260" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="div_kt" value="&lt;b&gt;÷ Kt&lt;/b&gt;&lt;br&gt;力矩常数&lt;br&gt;τ→Iq" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="350" width="100" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="friction" target="cogging">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="friction" value="&lt;b&gt;摩擦前馈&lt;/b&gt;&lt;br&gt;Stribeck模型&lt;br&gt;f(ω)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="350" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="cogging" value="&lt;b&gt;齿槽补偿&lt;/b&gt;&lt;br&gt;标定查表&lt;br&gt;g(θe)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="580" y="350" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="sum_iq" value="&lt;b&gt;&lt;font color=&quot;#000000&quot;&gt;Σ&lt;/font&gt;&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#f5f5f5;strokeColor=#666666;fontSize=16;" parent="1" vertex="1">
+                    <mxGeometry x="780" y="360" width="40" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_kt_to_sum" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="div_kt" target="sum_iq" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_fric_to_sum" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="friction" target="sum_iq" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_cog_to_sum" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="cogging" target="sum_iq" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="iq_ref" value="&lt;b&gt;Iq_ref&lt;/b&gt;&lt;br&gt;(A)" style="text;html=1;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=none;fontSize=12;fontColor=#0050EF;" parent="1" vertex="1">
+                    <mxGeometry x="840" y="360" width="70" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_sum_to_iq" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="sum_iq" target="iq_ref" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="formula2" value="&lt;i&gt;Iq_ref = τ_desired / Kt + f(ω) + g(θe)&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontSize=11;fontColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="340" y="305" width="300" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_tau_to_kt" style="edgeStyle=orthogonalEdgeStyle;rounded=0;entryX=0.5;entryY=0;" parent="1" source="tau_out" target="div_kt" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="990" y="290"/>
+                            <mxPoint x="250" y="290"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="layer3_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;opacity=30;arcSize=5;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="500" width="1520" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="layer3_label" value="&lt;b&gt;FOC 电流环 (15 kHz)&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=top;fillColor=#FFFFFF;strokeColor=none;fontSize=13;fontColor=#B85450;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="505" width="150" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="id_ref" value="&lt;b&gt;Id_ref = 0&lt;/b&gt;" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="540" width="110" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="sum_id" value="&lt;b&gt;&lt;font color=&quot;#000000&quot;&gt;⊕&lt;/font&gt;&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="210" y="545" width="30" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="pi_d" value="&lt;b&gt;PI_d&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="540" width="70" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="sum_iq2" value="&lt;b&gt;&lt;font color=&quot;#000000&quot;&gt;⊕&lt;/font&gt;&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="210" y="615" width="30" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="pi_q" value="&lt;b&gt;PI_q&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="610" width="70" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_iqref_to_piq" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="iq_ref" target="sum_iq2" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="875" y="440"/>
+                            <mxPoint x="50" y="440"/>
+                            <mxPoint x="50" y="630"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_idref_to_pid" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="id_ref" target="sum_id" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_sumid_to_pid" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="sum_id" target="pi_d" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_sumiq2_to_piq" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="sum_iq2" target="pi_q" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="vd_label" value="Vd" style="text;html=1;fontSize=11;fontColor=#B85450;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="545" width="30" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="vq_label" value="Vq" style="text;html=1;fontSize=11;fontColor=#B85450;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="618" width="30" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="ipark" value="&lt;b&gt;反Park&lt;/b&gt;&lt;br&gt;dq→αβ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="565" width="90" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_pid_to_ipark" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="pi_d" target="ipark" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_piq_to_ipark" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="pi_q" target="ipark" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="svpwm" value="&lt;b&gt;SVPWM&lt;/b&gt;&lt;br&gt;Vα,Vβ→PWM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="540" y="565" width="110" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_ipark_to_svpwm" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="ipark" target="svpwm" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="driver" value="&lt;b&gt;野火驱动板&lt;/b&gt;&lt;br&gt;三电阻采样&lt;br&gt;信号隔离" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="710" y="557.5" width="110" height="65" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_svpwm_to_drv" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="svpwm" target="driver" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="pwm_label" value="PWM_ABC" style="text;html=1;fontSize=10;fontColor=#9673A6;" parent="1" vertex="1">
+                    <mxGeometry x="650" y="555" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="motor" value="&lt;b&gt;42JSF630AS&lt;/b&gt;&lt;br&gt;50极对 PMSM&lt;br&gt;额定 4A / 0.2Nm" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="880" y="557.5" width="130" height="65" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_drv_to_mtr" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="driver" target="motor" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="uvw_label" value="U/V/W" style="text;html=1;fontSize=10;fontColor=#9673A6;" parent="1" vertex="1">
+                    <mxGeometry x="825" y="555" width="50" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="clarke" value="&lt;b&gt;Clarke&lt;/b&gt;&lt;br&gt;abc→αβ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="540" y="650" width="90" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" style="edgeStyle=none;html=1;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="park" target="sum_iq2">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="225" y="680"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="7" style="edgeStyle=none;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="park" target="sum_id">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="270" y="670"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="park" value="&lt;b&gt;Park&lt;/b&gt;&lt;br&gt;αβ→dq" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="405" y="650" width="90" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_clarke_to_park" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="clarke" target="park" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="adc_i" value="&lt;b&gt;ADC&lt;/b&gt;&lt;br&gt;Ia, Ib，Ic" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="725" y="650" width="80" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_drv_to_adc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="driver" target="adc_i" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_adc_to_clarke" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="adc_i" target="clarke" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="id_fb_label" value="Id" style="text;html=1;fontSize=10;fontColor=#B85450;" parent="1" vertex="1">
+                    <mxGeometry x="235" y="580" width="25" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="iq_fb_label" value="Iq" style="text;html=1;fontSize=10;fontColor=#B85450;" parent="1" vertex="1">
+                    <mxGeometry x="235" y="660" width="25" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="layer4_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce5cd;strokeColor=#d79b00;opacity=30;arcSize=5;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="720" width="1520" height="220" as="geometry"/>
+                </mxCell>
+                <mxCell id="layer4_label" value="&lt;b&gt;传感器反馈层&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=top;fillColor=none;strokeColor=none;fontSize=13;fontColor=#D79B00;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="725" width="200" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="encoder" value="&lt;b&gt;1000线光编码器&lt;/b&gt;&lt;br&gt;eQEP 4倍频&lt;br&gt;4000 counts/rev" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce5cd;strokeColor=#d79b00;fontSize=11;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="870" y="750" width="150" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_mtr_to_enc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="motor" target="encoder" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="theta_e" value="&lt;b&gt;电角度 θe&lt;/b&gt;&lt;br&gt;pos % 80 × 2π/80&lt;br&gt;(80 = 4000/50)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce5cd;strokeColor=#d79b00;fontSize=10;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="840" width="140" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="theta_m" value="&lt;b&gt;机械角 θm&lt;/b&gt;&lt;br&gt;pos / 4000 × 2π&lt;br&gt;+ 多圈累计" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce5cd;strokeColor=#d79b00;fontSize=10;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="600" y="840" width="140" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="omega" value="&lt;b&gt;转速 ω&lt;/b&gt;&lt;br&gt;Δpos / Δt&lt;br&gt;(eQEP Unit Timer)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce5cd;strokeColor=#d79b00;fontSize=10;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="800" y="840" width="140" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_enc_to_te" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="encoder" target="theta_e" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_enc_to_tm" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="encoder" target="theta_m" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_enc_to_w" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" parent="1" source="encoder" target="omega" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="te_target" value="→ 给电流环 (Park变换)&lt;br&gt;→ 给齿槽补偿 g(θe)" style="text;html=1;align=left;fontSize=10;fontColor=#B85450;strokeColor=#FFFFFF;fillColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="390" y="900" width="180" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="tm_target" value="→ 给阻抗控制器&lt;br&gt;   (位置误差)" style="text;html=1;align=left;fontSize=10;fontColor=#2D7600;fillColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="620" y="900" width="140" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="w_target" value="→ 给阻抗控制器 (阻尼项)&lt;br&gt;→ 给摩擦前馈 f(ω)" style="text;html=1;align=left;fontSize=10;fontColor=#2D7600;fillColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="805" y="900" width="200" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="cmd_wd" value="&lt;b&gt;ω_d = 0&lt;/b&gt;&lt;br&gt;目标角速度&lt;br&gt;(rad/s)" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontColor=#000000;" vertex="1" parent="1">
+                    <mxGeometry x="535" y="85" width="120" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_wd_to_sumvel" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" source="cmd_wd" target="sum_vel">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="vel_err_label" value="&lt;i&gt;ω_d − ω&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontSize=10;fontColor=#FFFFFF;" vertex="1" parent="1">
+                    <mxGeometry x="565" y="250" width="60" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="fric_formula" value="&lt;i&gt;f(ω) = sign(ω)·[τc+(τs−τc)·e&lt;sup&gt;−(ω/ωs)²&lt;/sup&gt;]+B·ω&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=none;fontSize=9;fontColor=#000000;" vertex="1" parent="1">
+                    <mxGeometry x="970" y="400" width="210" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="cog_formula" value="&lt;i&gt;g(θe) = A6·sin(6θe+φ6) + A12·sin(12θe+φ12)&lt;/i&gt;" style="text;html=1;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=none;fontSize=9;fontColor=#000000;" vertex="1" parent="1">
+                    <mxGeometry x="970" y="360" width="210" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="fb_te_to_park" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;strokeColor=#D79B00;strokeWidth=2;" edge="1" parent="1" source="theta_e" target="park">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="470" y="790"/>
+                            <mxPoint x="470" y="790"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="fb_te_to_cog" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;strokeColor=#D79B00;strokeWidth=2;" edge="1" parent="1" target="cogging">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="470" y="760"/>
+                            <mxPoint x="640" y="760"/>
+                        </Array>
+                        <mxPoint x="470" y="840" as="sourcePoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="fb_tm_to_sumpos" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;strokeColor=#D79B00;strokeWidth=2;" edge="1" parent="1" source="theta_m" target="sum_pos">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="280" y="867"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="fb_tm_label" value="&lt;i&gt;−θm&lt;/i&gt;" style="text;html=1;align=center;fontSize=10;fontColor=#D79B00;fillColor=#FFFFFF;" vertex="1" parent="1">
+                    <mxGeometry x="280" y="187" width="40" height="18" as="geometry"/>
+                </mxCell>
+                <mxCell id="fb_w_to_sumvel" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;strokeColor=#D79B00;strokeWidth=2;" edge="1" parent="1" source="omega" target="sum_vel">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="870" y="970"/>
+                            <mxPoint x="330" y="970"/>
+                            <mxPoint x="330" y="230"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="fb_w_label" value="&lt;i&gt;−ω&lt;/i&gt;" style="text;html=1;align=center;fontSize=10;fontColor=#D79B00;fillColor=#FFFFFF;" vertex="1" parent="1">
+                    <mxGeometry x="505" y="232" width="35" height="18" as="geometry"/>
+                </mxCell>
+                <mxCell id="fb_w_to_fric" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;strokeColor=#D79B00;strokeWidth=2;" edge="1" parent="1" source="omega" target="friction">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="870" y="970"/>
+                            <mxPoint x="190" y="970"/>
+                            <mxPoint x="190" y="380"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

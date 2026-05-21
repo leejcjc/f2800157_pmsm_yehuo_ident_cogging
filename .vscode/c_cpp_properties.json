@@ -1,0 +1,25 @@
+{
+    "configurations": [
+        {
+            "name": "TI F2800157",
+            "includePath": [
+                "${workspaceFolder}/user",
+                "${workspaceFolder}/src_device",
+                "${workspaceFolder}/src_device/device_support/headers/include",
+                "${workspaceFolder}/src_device/driverlib",
+                "${workspaceFolder}/src_device/driverlib/inc"
+            ],
+            "defines": [
+                "__TMS320C28XX__",
+                "_LAUNCHXL_F2800157",
+                "CPU1",
+                "_DEBUG"
+            ],
+            "compilerPath": "",
+            "cStandard": "c99",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "windows-gcc-x64"
+        }
+    ],
+    "version": 4
+}

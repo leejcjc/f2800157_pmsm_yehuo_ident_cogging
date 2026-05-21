@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?ccsproject version="1.0"?>
+<projectOptions>
+	<ccsVariant value="0:Eclipse-based"/>
+	<ccsVersion value="12.8.0"/>
+	<deviceVariant value="com.ti.ccstudio.deviceModel.C2000.GenericC28xxDevice"/>
+	<deviceFamily value="C2000"/>
+	<deviceEndianness value="little"/>
+	<codegenToolVersion value="22.6.1.LTS"/>
+	<isElfFormat value="true"/>
+	<rts value="libc.a"/>
+	<createSlaveProjects value=""/>
+	<templateProperties value="id=universal_motorcontrol_lab.projectspec.f2800157_bldc_FOC"/>
+	<sourceLookupPath value="${C2000WARE_DLIB_ROOT}"/>
+	<origin value="D:\1-ti\c2000\C2000Ware_MotorControl_SDK_5_04_00_00\solutions\157_bldc_foc\f280015x\ccs\motor_control\universal_motorcontrol_lab.projectspec"/>
+	<filesToOpen value=""/>
+	<isTargetManual value="false"/>
+</projectOptions>

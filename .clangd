@@ -1,0 +1,32 @@
+CompileFlags:
+  Add:
+    - -xc
+    - -ID:/1-ti/workspace/f2800157_bldc_FOC/user
+    - -ID:/1-ti/workspace/f2800157_bldc_FOC/src_device
+    - -ID:/1-ti/workspace/f2800157_bldc_FOC/src_device/device_support/headers/include
+    - -ID:/1-ti/workspace/f2800157_bldc_FOC/src_device/driverlib
+    - -ID:/1-ti/workspace/f2800157_bldc_FOC/src_device/driverlib/inc
+    - -D__TMS320C28XX__
+    - -D_LAUNCHXL_F2800157
+    - -DCPU1
+    - -D__interrupt=
+    - -D__byte_peripheral_32(x)=0
+    - -Wno-typedef-redefinition
+    - -Wno-main-return-type
+    - -Wno-implicit-function-declaration
+    - -ferror-limit=200
+
+Diagnostics:
+  UnusedIncludes: None
+  Suppress:
+    - pp_file_not_found
+    - typedef-redefinition
+    - integer-precision-loss
+
+---
+
+# TI driverlib 是厂商代码, clangd 无法正确解析, 关闭其诊断
+If:
+  PathMatch: src_device/.*
+Diagnostics:
+  Suppress: ["*"]
