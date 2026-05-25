@@ -122,7 +122,7 @@ extern "C" {
 #define SPEED_LOOP_FREQ_Hz          (ISR_FREQ_Hz / (float)SPEED_LOOP_EXEC_RATIO)  // 1500 Hz
 #define PI_SPD_KP                   0.015f          // A/(rad/s), 空载保守初值
 #define PI_SPD_KI                   0.00012f         // 积分增益 (已含 Ts_spd), 先小后调
-#define PI_SPD_OUT_MAX              1.0f      //原来MOTOR_MAX_CURRENT_A (7A)
+#define PI_SPD_OUT_MAX              1.5f      //原来MOTOR_MAX_CURRENT_A (7A)
 #define PI_SPD_OUT_MIN              (-PI_SPD_OUT_MAX)
 
 // ------------- 位置环 P (带宽 30 Hz, 与速度环同频执行) --------------------

@@ -45,8 +45,8 @@ static CtrlMode_e       prevCtrlMode = CTRL_MODE_SPEED;
 volatile FaultFlag_t    faultFlags;
 
 //开环
-volatile  float openLoopElecHz = 10.0f;
-volatile  float openLoopVq_V   = 0.75f;
+volatile  float openLoopElecHz = 0.0f;
+volatile  float openLoopVq_V   = 0.0f;
 
 // === Z 相校准结果 ===
 static volatile int32_t  g_zCntOffset = 0;       // Z 处锁存的 QPOSCNT (归一化到一个电周期)
@@ -221,30 +221,19 @@ __interrupt void motorControlISR(void)
         // 强制电角度 = 0, 注入 d 轴电压, 拉转子到 N 极对准 A 轴位置
         float sinTh, cosTh;
         FOC_sincos(0.0f, &sinTh, &cosTh);
-
-        foc.vDQ.d = 0.8f;   // 1.5f
+        foc.vDQ.d = 0.8f;   
         foc.vDQ.q = 0.0f;
-        // Clarke_run(foc.iABC_A.a, foc.iABC_A.b, (AB_t *)&foc.iAlBe);
-        // Park_run((const AB_t *)&foc.iAlBe, sinTh, cosTh, (DQ_t *)&foc.iDQ);
-
-        // // 3. ★ 闭环控制：让实际的 d 轴电流去追踪 Id_align_ref (1.5A)
-        // foc.vDQ.d = PI_run((PI_t *)&foc.piId, Id_align_ref, foc.iDQ.d);
-        // foc.vDQ.q = PI_run((PI_t *)&foc.piIq, 0.0f,         foc.iDQ.q);
-
         IPark_run((const DQ_t *)&foc.vDQ, sinTh, cosTh, (AB_t *)&foc.vAlBe);
         SVPWM_run((const AB_t *)&foc.vAlBe, foc.vDC_V, (ABC_t *)&foc.duty);
         HAL_writePWM(foc.duty.a, foc.duty.b, foc.duty.c);
-        
         alignCounter++;
-
         // 持续 ALIGN_DURATION_MS 后, 转子已稳定 → 建立编码器零点基准
         if(alignCounter >= (uint32_t)(ALIGN_DURATION_MS * ISR_FREQ_Hz / 1000.0f))
         {
         alignCounter = 0U;
- 
+
         // ★ 关键: 清零 QPOSCNT, 建立 "CNT=0 ↔ θ_e=0" 基准
         EQEP_setPosition(ENC_EQEP_BASE, 0U);
- 
         // 同步软件编码器结构体
         foc.enc.offset      = 0;
         foc.enc.turnCount   = 0;
@@ -279,7 +268,7 @@ __interrupt void motorControlISR(void)
  
         // V/f 电压 (与 OPEN_LOOP_VF 公式一致)
         // float vq = OPEN_LOOP_VF_BOOST + OPEN_LOOP_VF_SLOPE * ZCAL_FIND_FREQ_HZ;
-        float vq = 0.75;
+        float vq = 0.61;
 
         // 输出 SVPWM
         float sinTh, cosTh;
@@ -374,11 +363,18 @@ __interrupt void motorControlISR(void)
 
             Encoder_calcSpeed((Encoder_t *)&foc.enc);//单位转换
 
-            Cogging_recordSample(foc.enc.rawAngle,
-                                 foc.enc.speedMech_rads,
-                                 foc.iDQ.q,
-                                 ident_res.Bm_Active,
-                                 ident_res.Cm_Active);
+            // 只在非辨识 + 机械参数已完成 + 低速匀速时记录
+            if((ctrlMode != CTRL_MODE_IDENT) &&
+                (ident_res.Is_Finished != 0U) &&
+                (ident_res.Enable_FF != 0U) &&
+                (cog_enable == 0U))
+                {
+                    Cogging_recordSample(foc.enc.rawAngle,
+                                        foc.enc.speedMech_rads,
+                                        foc.iDQ.q,
+                                        ident_res.Bm_Active,
+                                        ident_res.Cm_Active);
+                }
 
              // 根据控制模式设定 Iq 参考
              ctrlMode = (CtrlMode_e)cmdCtrlMode;
@@ -509,6 +505,12 @@ __interrupt void motorControlISR(void)
     if(++vofaCounter >= 5)
     {
        vofaCounter = 0U;
+       VOFA_updateData(
+                            speed_ref_rpm,
+                            foc.enc.speedMech_rads * 60.0f / MATH_TWO_PI,
+                            foc.enc.rawAngle,
+                            cog_last_index
+                        );
 
     //    VOFA_updateData(speed_ref_rpm,
     //             foc.enc.speedMech_rads * 9.54929,
@@ -516,11 +518,11 @@ __interrupt void motorControlISR(void)
     //             foc.iDQ.q);
 
 
-            //辨识数据
-            VOFA_updateData(ident_res.speed_Ref * 60.0f / MATH_TWO_PI,                                 
-                            foc.enc.speedMech_rads * 60.0f / MATH_TWO_PI,   // 转换为 rpm 发送
-                            foc.iqRef_A,                                   
-                            foc.iDQ.q); 
+            // //辨识数据
+            // VOFA_updateData(ident_res.speed_Ref * 60.0f / MATH_TWO_PI,                                 
+            //                 foc.enc.speedMech_rads * 60.0f / MATH_TWO_PI,   // 转换为 rpm 发送
+            //                 foc.iqRef_A,                                   
+            //                 foc.iDQ.q); 
                        
 
     }

@@ -25,7 +25,7 @@ extern "C" {
 typedef enum {
     COG_RECORD_STOP     = 0U,  //停止记录
     COG_RECORD_POSITIVE = 1U,  //正转记录
-    COG_RECORD_NEGATIVE = 2U   //反转记录 
+    COG_RECORD_NEGATIVE = 2U   //反转记录
 } CoggingRecordMode_e;
 
 extern volatile uint16_t cog_enable;
@@ -45,6 +45,15 @@ extern volatile float cog_iqComp_A;
 extern volatile float cog_iqRaw_A;
 extern volatile float cog_iqRecord_A;
 
+//测试
+extern volatile uint16_t cog_raw_dbg;
+extern volatile uint16_t cog_zero_dbg;
+extern volatile int32_t  cog_diff_dbg;
+extern volatile int32_t  cog_mod_dbg;
+extern volatile uint16_t cog_posCount_dbg;
+extern volatile uint32_t cog_idx32_dbg;
+extern volatile uint16_t cog_idx_dbg;
+
 void  Cogging_init(void);
 void  Cogging_reset(void);
 void  Cogging_serviceRequests(void);
@@ -53,6 +62,9 @@ void  Cogging_clearRuntimeOutput(void);
 void  Cogging_recordSample(uint16_t rawCount, float omega_m, float iq_fbk,
                            float Bm, float Cm);
 float Cogging_getCompCurrent(uint16_t rawCount);
+
+//新增
+static uint16_t Cogging_posCountFromRaw(uint16_t rawCount);
 
 #ifdef __cplusplus
 }

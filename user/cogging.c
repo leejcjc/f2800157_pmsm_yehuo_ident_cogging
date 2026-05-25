@@ -35,6 +35,15 @@ volatile float cog_iqComp_A   = 0.0f;
 volatile float cog_iqRaw_A    = 0.0f;
 volatile float cog_iqRecord_A = 0.0f;
 
+//测试
+volatile uint16_t cog_raw_dbg      = 0U;
+volatile uint16_t cog_zero_dbg     = 0U;
+volatile int32_t  cog_diff_dbg     = 0L;
+volatile int32_t  cog_mod_dbg      = 0L;
+volatile uint16_t cog_posCount_dbg = 0U;
+volatile uint32_t cog_idx32_dbg    = 0UL;
+volatile uint16_t cog_idx_dbg      = 0U;
+
 // 齿槽补偿需要较大的数组，不能放默认 .bss 小 RAM 区。
 // 这里把数组放到 linker 文件里的 cog_data 段，再由 cmd 文件映射到 RAMLS0D。
 #pragma DATA_SECTION(cog_sum_pos, "cog_data");
@@ -64,7 +73,7 @@ static float Cogging_limit(float x, float minVal, float maxVal)
     return x;
 }
 
-// 把任意编码器计数折回到 [0, ENC_COUNTS_PER_REV)。
+// 把任意编码器计数折回到 [0, 10000)。
 static uint16_t Cogging_wrapCount(int32_t count)
 {
     count %= (int32_t)ENC_COUNTS_PER_REV;
@@ -75,22 +84,126 @@ static uint16_t Cogging_wrapCount(int32_t count)
     return (uint16_t)count;
 }
 
+//-------新增-------
+static uint16_t Cogging_posCountFromRaw(uint16_t rawCount)
+{
+    uint32_t cpr;
+    uint32_t raw;
+    uint32_t zero;
+    uint32_t pos;
+
+    cpr  = (uint32_t)ENC_COUNTS_PER_REV;
+    raw  = (uint32_t)rawCount;
+    zero = (uint32_t)cog_zero_count;
+
+    if(zero >= cpr)
+    {
+        zero = zero % cpr;
+    }
+
+    if(raw >= zero)
+    {
+        pos = raw - zero;
+    }
+    else
+    {
+        pos = raw + cpr - zero;
+    }
+
+    if(pos >= cpr)
+    {
+        pos = pos % cpr;
+    }
+
+    return (uint16_t)pos;
+}
+
 // 根据原始编码器计数计算 LUT 下标。  索引标号
 // cog_zero_count 是 Z 相确定的齿槽零点，使每次上电后的表位置一致。
-static uint16_t Cogging_indexFromRaw(uint16_t rawCount)
+// static uint16_t Cogging_indexFromRaw(uint16_t rawCount)
+// {
+//     uint16_t posCount = Cogging_wrapCount((int32_t)rawCount -
+//                                           (int32_t)cog_zero_count);
+//     uint32_t idx = ((uint32_t)posCount * (uint32_t)COG_LUT_SIZE) /
+//                    (uint32_t)ENC_COUNTS_PER_REV;
+   
+//     if(idx >= (uint32_t)COG_LUT_SIZE)
+//     {
+//         idx = (uint32_t)COG_LUT_SIZE - 1UL;
+//     }
+
+//     //测试
+//     cog_posCount_dbg = posCount;
+//     cog_idx_dbg = (uint16_t)idx;
+
+
+//     return (uint16_t)idx;
+// }
+
+
+// static uint16_t Cogging_indexFromRaw(uint16_t rawCount)
+// {
+//     int32_t diff;
+//     int32_t mod;
+//     uint32_t idx32;
+
+//     cog_raw_dbg  = rawCount;
+//     cog_zero_dbg = cog_zero_count;
+
+//     diff = (int32_t)rawCount - (int32_t)cog_zero_count;
+//     cog_diff_dbg = diff;
+
+//     mod = diff % (int32_t)ENC_COUNTS_PER_REV;
+//     if(mod < 0L)
+//     {
+//         mod += (int32_t)ENC_COUNTS_PER_REV;
+//     }
+
+//     cog_mod_dbg = mod;
+//     cog_posCount_dbg = (uint16_t)mod;
+
+//     idx32 = ((uint32_t)mod * (uint32_t)COG_LUT_SIZE) /
+//             (uint32_t)ENC_COUNTS_PER_REV;
+
+//     cog_idx32_dbg = idx32;
+
+//     if(idx32 >= (uint32_t)COG_LUT_SIZE)
+//     {
+//         idx32 = (uint32_t)COG_LUT_SIZE - 1UL;
+//     }
+
+//     cog_idx_dbg = (uint16_t)idx32;
+
+//     return (uint16_t)idx32;
+// }
+
+static uint16_t Cogging_indexFromRaw(uint16_t rawCount)//-------修改-------
 {
-    uint16_t posCount = Cogging_wrapCount((int32_t)rawCount -
-                                          (int32_t)cog_zero_count);
-    uint32_t idx = ((uint32_t)posCount * (uint32_t)COG_LUT_SIZE) /
-                   (uint32_t)ENC_COUNTS_PER_REV;
+    uint16_t posCount;
+    uint32_t idx;
+
+    posCount = Cogging_posCountFromRaw(rawCount);
+
+    idx = ((uint32_t)posCount * (uint32_t)COG_LUT_SIZE) /
+          (uint32_t)ENC_COUNTS_PER_REV;
 
     if(idx >= (uint32_t)COG_LUT_SIZE)
     {
         idx = (uint32_t)COG_LUT_SIZE - 1UL;
     }
 
+    cog_raw_dbg      = rawCount;
+    cog_zero_dbg     = cog_zero_count;
+    cog_diff_dbg     = (int32_t)rawCount - (int32_t)cog_zero_count;
+    cog_mod_dbg      = (int32_t)posCount;
+    cog_posCount_dbg = posCount;
+    cog_idx32_dbg    = idx;
+    cog_idx_dbg      = (uint16_t)idx;
+
     return (uint16_t)idx;
 }
+
+
 
 // 根据已经记录的正转/反转样本生成最终补偿表。
 // 注意: 该函数在主循环中执行；生成期间先把 cog_ready 清零，避免 ISR 读到半成品表。
@@ -346,10 +459,10 @@ float Cogging_getCompCurrent(uint16_t rawCount)
         return 0.0f;
     }
 
-    posCount = Cogging_wrapCount((int32_t)rawCount -
-                                 (int32_t)cog_zero_count);
-    x = (float)posCount * ((float)COG_LUT_SIZE /
-                           (float)ENC_COUNTS_PER_REV);
+    // posCount = Cogging_wrapCount((int32_t)rawCount - (int32_t)cog_zero_count);
+    posCount = Cogging_posCountFromRaw(rawCount);//-------修改-------
+
+    x = (float)posCount * ((float)COG_LUT_SIZE / (float)ENC_COUNTS_PER_REV);
     k0 = (uint16_t)x;
     if(k0 >= COG_LUT_SIZE)
     {
